@@ -6,7 +6,10 @@ import 'package:repair/controllers/home_controller.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  Get.put(HomeController());
+  // Initialize controller
+  final controller = Get.put(HomeController());
+  debugPrint('Initial index: ${controller.currentIndex.value}');
+
   runApp(const MyApp());
 }
 

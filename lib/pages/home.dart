@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:repair/components/home_component.dart';
+import 'package:repair/events/home_events.dart';
+import 'package:get/get.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -25,343 +27,218 @@ class _HomePageState extends State<HomePage> {
     'Change Style Adjust Machine'
   ];
   List<bool> _isSelected = [];
-
+  List<bool> _problemFoundSelected = [];
+  bool _problemFoundDropdownOpen = false;
   final TextEditingController codeController = TextEditingController();
-
   bool _isDropdownOpen = false;
+  bool _codeError = false;
+  bool _problemError = false;
+  int currentIndex = 1;
+  final FocusNode _codeFocusNode = FocusNode();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _isSelected = List.generate(_problemList.length, (index) => false);
+    _problemFoundSelected =
+        List.generate(_problemList.length, (index) => false);
+  }
+
+  void _handleProblemSelection(int index) {
+    setState(() {
+      _isSelected[index] = !_isSelected[index];
+    });
+  }
+
+  void _handleProblemFoundSelection(int index) {
+    setState(() {
+      _problemFoundSelected[index] = !_problemFoundSelected[index];
+    });
+  }
+
+  void _scrollToTop() {
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () {},
-        ),
-        title: Row(
-          children: [
-            Image.asset(
-              'assets/images/ytm_logo.png',
-              width: 32,
-              height: 32,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'YTM',
-              style: GoogleFonts.figtree(fontWeight: FontWeight.bold),
-            ),
-            Text(
-              ' V1.0',
-              style: GoogleFonts.figtree(
-                color: Colors.grey,
-                fontSize: 14,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              children: [
-                const Icon(Icons.language),
-                const SizedBox(width: 4),
-                Text(
-                  'English',
-                  style: GoogleFonts.figtree(),
+      appBar: HomeComponents.buildAppBar(),
+      body: GestureDetector(
+        onTap: () {
+          // Dismiss keyboard when tapping outside
+          FocusScope.of(context).unfocus();
+        },
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                currentIndex == 1
+                    ? 'First Scan Report'
+                    : currentIndex == 2
+                        ? 'Second Scan Repair'
+                        : 'Repair Log',
+                style: GoogleFonts.figtree(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
                 ),
-                const Icon(Icons.arrow_drop_down),
-              ],
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.notifications),
-            onPressed: () {},
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: CircleAvatar(
-              radius: 15,
-              backgroundColor: Colors.grey[300],
-              child: const Icon(Icons.person, size: 20, color: Colors.grey),
-            ),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Repair',
-              style: GoogleFonts.figtree(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
               ),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: codeController,
-                    enabled: true,
-                    decoration: InputDecoration(
-                      hintText: 'Enter code',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 16),
-                      filled: true,
-                      fillColor: Colors.grey[
-                          100], // Changed fill color to match problem lists
+              const SizedBox(height: 24),
+              HomeComponents.buildScanSectionWithError(
+                codeController,
+                _codeError,
+                focusNode: _codeFocusNode,
+              ),
+              const SizedBox(height: 24),
+              HomeComponents.buildTextField('Khmer Name', 'ឈ្មោះជាភាសាខ្មែរ'),
+              HomeComponents.buildTextField('Chinese Name', '中文名'),
+              HomeComponents.buildTextField('English Name', 'English name'),
+              Row(
+                children: [
+                  Expanded(
+                    child: HomeComponents.buildTextField('Brand', 'Brand'),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: HomeComponents.buildTextField(
+                      'Serial Number',
+                      'Serial Number',
                     ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    final result = await Get.toNamed('/qr-scanner');
-                    if (result != null) {
-                      setState(() {
-                        codeController.text = result.toString();
-                      });
-                    }
-                  },
-                  icon: const Icon(Icons.qr_code_scanner),
-                  label: const Text('SCAN'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1F2937),
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 16, horizontal: 24),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            _buildTextField('Khmer Name', 'ឈ្មោះជាភាសាខ្មែរ'),
-            _buildTextField('Chinese Name', '中文名'),
-            _buildTextField('English Name', 'English name'),
-            Row(
-              children: [
-                Expanded(child: _buildTextField('Brand', 'Brand')),
-                const SizedBox(width: 16),
-                Expanded(
-                    child: _buildTextField('Serial Number', 'Serial Number')),
-              ],
-            ),
-            Row(
-              children: [
-                Expanded(
-                    child: _buildTextField('Current Location', 'Location')),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      RichText(
-                        text: TextSpan(
-                          children: [
-                            TextSpan(
-                              text: 'Problem ',
-                              style: GoogleFonts.figtree(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color:
-                                    Colors.black, // Default color for "Problem"
-                              ),
-                            ),
-                            TextSpan(
-                              text: '*',
-                              style: GoogleFonts.figtree(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.red, // Red color for the asterisk
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        height: 48,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: PopupMenuButton<String>(
-                          onOpened: () {
-                            setState(() {
-                              _isDropdownOpen = true;
-                            });
-                          },
-                          onCanceled: () {
-                            setState(() {
-                              _isDropdownOpen = false;
-                            });
-                          },
-                          constraints: BoxConstraints(
-                            maxHeight: MediaQuery.of(context).size.height * 0.4,
-                            maxWidth: MediaQuery.of(context).size.width * 0.4,
-                          ),
-                          position: PopupMenuPosition.under,
-                          offset: const Offset(0, 0),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            side: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          color: Colors.white,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 12),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    _isSelected.any((selected) => selected)
-                                        ? _problemList
-                                            .asMap()
-                                            .entries
-                                            .where((entry) =>
-                                                _isSelected[entry.key])
-                                            .map((entry) => entry.value)
-                                            .join(', ')
-                                        : 'Problem lists',
-                                    style: TextStyle(
-                                      color: _isSelected
-                                              .any((selected) => selected)
-                                          ? Colors.black
-                                          : Colors.grey[600],
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                Icon(
-                                  _isDropdownOpen
-                                      ? Icons.arrow_drop_up
-                                      : Icons.arrow_drop_down,
-                                  color: Colors.grey[600],
-                                ),
-                              ],
-                            ),
-                          ),
-                          itemBuilder: (context) {
-                            return _problemList.asMap().entries.map((entry) {
-                              int index = entry.key;
-                              String problem = entry.value;
-                              return PopupMenuItem<String>(
-                                value: problem,
-                                enabled: false,
-                                height: 40,
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 8),
-                                child: StatefulBuilder(
-                                  builder: (context, setStateLocal) {
-                                    return InkWell(
-                                      onTap: () {
-                                        setStateLocal(() {
-                                          _isSelected[index] =
-                                              !_isSelected[index];
-                                        });
-                                        setState(() {});
-                                      },
-                                      child: Row(
-                                        children: [
-                                          Checkbox(
-                                            value: _isSelected[index],
-                                            onChanged: (bool? value) {
-                                              setStateLocal(() {
-                                                _isSelected[index] = value!;
-                                              });
-                                              setState(() {});
-                                            },
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: Text(
-                                              problem,
-                                              style: const TextStyle(
-                                                  color: Colors.black),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                ),
-                              );
-                            }).toList();
-                          },
-                          onSelected: (_) {},
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            _buildTextField('Report Description', 'Description', maxLines: 4),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.flash_on),
-              label: const Text('REPORT'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                minimumSize: const Size(double.infinity, 48),
+                ],
               ),
-            ),
-          ],
+              Row(
+                children: [
+                  Expanded(
+                    child: HomeComponents.buildTextField(
+                      'Current Location',
+                      'Location',
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: HomeComponents.buildProblemDropdownWithError(
+                      _problemList,
+                      _isSelected,
+                      _isDropdownOpen,
+                      currentIndex == 1 ? _handleProblemSelection : (_) {},
+                      (isOpen) {
+                        setState(() {
+                          _isDropdownOpen = isOpen;
+                          if (!isOpen && currentIndex != 3) {
+                            _codeFocusNode.unfocus();
+                          }
+                        });
+                      },
+                      _problemError,
+                      isEnabled: currentIndex == 1,
+                    ),
+                  ),
+                ],
+              ),
+              HomeComponents.buildTextField(
+                'Report Description',
+                'Description',
+                maxLines: 4,
+              ),
+              const SizedBox(height: 24),
+              if (currentIndex == 3)
+                HomeComponents.buildRepairLogForm(
+                  problemList: _problemList,
+                  problemFoundSelected: _problemFoundSelected,
+                  problemFoundDropdownOpen: _problemFoundDropdownOpen,
+                  onProblemFoundSelected: _handleProblemFoundSelection,
+                  onProblemFoundDropdownStateChanged: (isOpen) {
+                    setState(() {
+                      _problemFoundDropdownOpen = isOpen;
+                    });
+                  },
+                ),
+              const SizedBox(height: 24),
+              HomeComponents.buildSubmitButton(
+                () {
+                  if (currentIndex == 2) {
+                    HomeEvents.handleRepairStage(
+                      codeController: codeController,
+                      setCodeError: (value) =>
+                          setState(() => _codeError = value),
+                      onSuccess: () {
+                        setState(() {
+                          currentIndex = 3;
+                          codeController.clear();
+                          _codeError = false;
+                        });
+                        _scrollToTop();
+                      },
+                    );
+                  } else if (currentIndex == 3) {
+                    HomeEvents.handleConfirmFixed(
+                      problemFoundSelected: _problemFoundSelected,
+                      onSuccess: () {
+                        setState(() {
+                          currentIndex = 1;
+                          codeController.clear();
+                          _isSelected = List.generate(
+                              _problemList.length, (index) => false);
+                          _problemFoundSelected = List.generate(
+                              _problemList.length, (index) => false);
+                          _codeError = false;
+                          _problemError = false;
+                        });
+                        _scrollToTop();
+                      },
+                    );
+                  } else {
+                    HomeEvents.handleSubmitReport(
+                      codeController: codeController,
+                      isSelected: _isSelected,
+                      setCodeError: (value) =>
+                          setState(() => _codeError = value),
+                      setProblemError: (value) =>
+                          setState(() => _problemError = value),
+                      currentIndex: currentIndex,
+                      onSuccess: () {
+                        setState(() {
+                          codeController.clear();
+                          _isSelected = List.generate(
+                              _problemList.length, (index) => false);
+                          _problemFoundSelected = List.generate(
+                              _problemList.length, (index) => false);
+                          _codeError = false;
+                          _problemError = false;
+                          currentIndex = 2;
+                        });
+                        _scrollToTop();
+                      },
+                    );
+                  }
+                },
+                currentIndex == 1
+                    ? 'REPORT'
+                    : currentIndex == 2
+                        ? 'REPAIR'
+                        : 'CONFIRM FIXED',
+              ),
+            ],
+          ),
         ),
       ),
-    );
-  }
-
-  Widget _buildTextField(String label, String hint, {int maxLines = 1}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.figtree(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          enabled: false,
-          maxLines: maxLines,
-          decoration: InputDecoration(
-            hintText: hint,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            filled: true,
-            fillColor: Colors.grey[100],
-          ),
-        ),
-        const SizedBox(height: 16),
-      ],
     );
   }
 
   @override
   void dispose() {
     codeController.dispose();
+    _codeFocusNode.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 }

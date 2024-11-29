@@ -17,11 +17,11 @@ class _QRScannerPageState extends State<QRScannerPage>
   bool isFlashOn = false;
   bool isFrontCamera = false;
   bool hasPermission = false;
-  
+
   late AnimationController _animationController;
   late Animation<double> _animation;
   bool _isDisposed = false;
-
+  
   @override
   void initState() {
     super.initState();
@@ -172,7 +172,9 @@ class _QRScannerPageState extends State<QRScannerPage>
                     animation: _animation,
                     builder: (context, child) {
                       return Positioned(
-                        top: _animation.value * MediaQuery.of(context).size.width * 0.7,
+                        top: _animation.value *
+                            MediaQuery.of(context).size.width *
+                            0.7,
                         left: 0,
                         right: 0,
                         child: Container(
