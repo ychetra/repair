@@ -138,7 +138,9 @@ class HomeComponents {
                 focusNode: focusNode,
                 enabled: true,
                 style: TextStyle(
-                  color: codeController.text.isNotEmpty ? Colors.black : Colors.grey[600],
+                  color: codeController.text.isNotEmpty
+                      ? Colors.black
+                      : Colors.grey[600],
                 ),
                 decoration: InputDecoration(
                   hintText: 'Enter code',
@@ -183,7 +185,8 @@ class HomeComponents {
               label: const Text('SCAN'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1F2937),
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
               ),
             ),
           ],
@@ -192,47 +195,75 @@ class HomeComponents {
     );
   }
 
-  static Widget buildTextField(
+  static Widget buildRequiredTextField(
     String label,
-    String hint, {
+    String hint,
+    TextEditingController controller, {
     int maxLines = 1,
-    bool enabled = false,
+    bool enabled = true,
+    bool hasError = false,
+    FocusNode? focusNode,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: GoogleFonts.figtree(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
+        RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: '$label ',
+                style: GoogleFonts.figtree(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: hasError ? Colors.red : Colors.black,
+                ),
+              ),
+              TextSpan(
+                text: '*',
+                style: GoogleFonts.figtree(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.red,
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 8),
         TextField(
+          controller: controller,
+          focusNode: focusNode,
           enabled: enabled,
           maxLines: maxLines,
+          style: TextStyle(
+            color: controller.text.isNotEmpty ? Colors.black : Colors.grey[600],
+          ),
           decoration: InputDecoration(
             hintText: hint,
+            hintStyle: TextStyle(color: Colors.grey[600]),
+            prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(
+                color: hasError ? Colors.red : Colors.grey.shade300,
+                width: hasError ? 2 : 1,
+              ),
             ),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            filled: true,
-            fillColor: enabled ? Colors.white : Colors.grey[100],
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderSide: BorderSide(
+                color: hasError ? Colors.red : Colors.grey.shade300,
+                width: hasError ? 2 : 1,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Colors.blue, width: 2),
+              borderSide: BorderSide(
+                color: hasError ? Colors.red : Colors.blue,
+                width: 2,
+              ),
             ),
-            disabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade200),
-            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
           ),
         ),
         const SizedBox(height: 16),
@@ -383,135 +414,139 @@ class HomeComponents {
     bool isEnabled = true,
     String label = 'Problem', // Default label
     bool isRequired = false, // Default not required
+    FocusNode? focusNode,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        RichText(
-          text: TextSpan(
-            children: [
-              TextSpan(
-                text: '$label ',
-                style: GoogleFonts.figtree(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: hasError ? Colors.red : Colors.black,
-                ),
-              ),
-              if (isRequired)
+    return Focus(
+      focusNode: focusNode,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RichText(
+            text: TextSpan(
+              children: [
                 TextSpan(
-                  text: '*',
+                  text: '$label ',
                   style: GoogleFonts.figtree(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
-                    color: Colors.red,
+                    color: hasError ? Colors.red : Colors.black,
                   ),
                 ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          height: 48,
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: hasError ? Colors.red : Colors.grey.shade300,
-              width: hasError ? 2 : 1,
-            ),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: PopupMenuButton<String>(
-            enabled: isEnabled,
-            onOpened: () => onDropdownStateChanged(true),
-            onCanceled: () => onDropdownStateChanged(false),
-            constraints: const BoxConstraints(
-              maxHeight: 300,
-              maxWidth: 300,
-            ),
-            position: PopupMenuPosition.under,
-            offset: const Offset(0, 0),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-              side: BorderSide(color: Colors.grey.shade300),
-            ),
-            color: Colors.white,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      isSelected.any((selected) => selected)
-                          ? problemList
-                              .asMap()
-                              .entries
-                              .where((entry) => isSelected[entry.key])
-                              .map((entry) => entry.value)
-                              .join(', ')
-                          : 'Problem lists',
-                      style: TextStyle(
-                        color: isSelected.any((selected) => selected)
-                            ? Colors.black
-                            : Colors.grey[600],
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                if (isRequired)
+                  TextSpan(
+                    text: '*',
+                    style: GoogleFonts.figtree(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.red,
                     ),
                   ),
-                  Icon(
-                    isDropdownOpen
-                        ? Icons.arrow_drop_up
-                        : Icons.arrow_drop_down,
-                    color: Colors.grey[600],
-                  ),
-                ],
-              ),
+              ],
             ),
-            itemBuilder: (context) {
-              return problemList.asMap().entries.map((entry) {
-                int index = entry.key;
-                String problem = entry.value;
-                return PopupMenuItem<String>(
-                  value: problem,
-                  enabled: false,
-                  height: 40,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: StatefulBuilder(
-                    builder: (context, setStateLocal) {
-                      return InkWell(
-                        onTap: () {
-                          onProblemSelected(index);
-                          setStateLocal(() {});
-                        },
-                        child: Row(
-                          children: [
-                            Checkbox(
-                              value: isSelected[index],
-                              onChanged: (bool? value) {
-                                onProblemSelected(index);
-                                setStateLocal(() {});
-                              },
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                problem,
-                                style: const TextStyle(color: Colors.black),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                );
-              }).toList();
-            },
-            onSelected: (_) {},
           ),
-        ),
-        const SizedBox(height: 16),
-      ],
+          const SizedBox(height: 8),
+          Container(
+            height: 48,
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: hasError ? Colors.red : Colors.grey.shade300,
+                width: hasError ? 2 : 1,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: PopupMenuButton<String>(
+              enabled: isEnabled,
+              onOpened: () => onDropdownStateChanged(true),
+              onCanceled: () => onDropdownStateChanged(false),
+              constraints: const BoxConstraints(
+                maxHeight: 300,
+                maxWidth: 300,
+              ),
+              position: PopupMenuPosition.under,
+              offset: const Offset(0, 0),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+                side: BorderSide(color: Colors.grey.shade300),
+              ),
+              color: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        isSelected.any((selected) => selected)
+                            ? problemList
+                                .asMap()
+                                .entries
+                                .where((entry) => isSelected[entry.key])
+                                .map((entry) => entry.value)
+                                .join(', ')
+                            : 'Problem lists',
+                        style: TextStyle(
+                          color: isSelected.any((selected) => selected)
+                              ? Colors.black
+                              : Colors.grey[600],
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Icon(
+                      isDropdownOpen
+                          ? Icons.arrow_drop_up
+                          : Icons.arrow_drop_down,
+                      color: Colors.grey[600],
+                    ),
+                  ],
+                ),
+              ),
+              itemBuilder: (context) {
+                return problemList.asMap().entries.map((entry) {
+                  int index = entry.key;
+                  String problem = entry.value;
+                  return PopupMenuItem<String>(
+                    value: problem,
+                    enabled: false,
+                    height: 40,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: StatefulBuilder(
+                      builder: (context, setStateLocal) {
+                        return InkWell(
+                          onTap: () {
+                            onProblemSelected(index);
+                            setStateLocal(() {});
+                          },
+                          child: Row(
+                            children: [
+                              Checkbox(
+                                value: isSelected[index],
+                                onChanged: (bool? value) {
+                                  onProblemSelected(index);
+                                  setStateLocal(() {});
+                                },
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  problem,
+                                  style: const TextStyle(color: Colors.black),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                }).toList();
+              },
+              onSelected: (_) {},
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
     );
   }
 
@@ -533,6 +568,7 @@ class HomeComponents {
     required bool problemFoundDropdownOpen,
     required Function(int) onProblemFoundSelected,
     required Function(bool) onProblemFoundDropdownStateChanged,
+    FocusNode? focusNode,
   }) {
     final List<String> conditions = ['Best', 'Good', 'OK', 'Bad', 'Worse'];
 
@@ -560,6 +596,7 @@ class HomeComponents {
           isEnabled: true,
           label: 'Problem Found',
           isRequired: true,
+          focusNode: focusNode,
         ),
         buildTextField(
           'Problem Found Description',
@@ -687,5 +724,53 @@ class HomeComponents {
       default:
         return Colors.black;
     }
+  }
+
+  static Widget buildTextField(
+    String label,
+    String hint, {
+    int maxLines = 1,
+    bool enabled = false,
+    TextEditingController? controller,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.figtree(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          enabled: enabled,
+          maxLines: maxLines,
+          decoration: InputDecoration(
+            hintText: hint,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.blue, width: 2),
+            ),
+            disabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade200),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
   }
 }

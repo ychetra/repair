@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:repair/components/home_component.dart';
 import 'package:repair/events/home_events.dart';
-import 'package:get/get.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -36,6 +35,8 @@ class _HomePageState extends State<HomePage> {
   int currentIndex = 1;
   final FocusNode _codeFocusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
+  bool _ignoreFocus = false;
+  final FocusNode _dropdownFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -71,9 +72,11 @@ class _HomePageState extends State<HomePage> {
       appBar: HomeComponents.buildAppBar(),
       body: GestureDetector(
         onTap: () {
-          // Dismiss keyboard when tapping outside
-          FocusScope.of(context).unfocus();
+          if (!_ignoreFocus) {
+            FocusScope.of(context).unfocus();
+          }
         },
+        behavior: HitTestBehavior.translucent,
         child: SingleChildScrollView(
           controller: _scrollController,
           padding: const EdgeInsets.all(16),
@@ -92,10 +95,12 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               const SizedBox(height: 24),
-              HomeComponents.buildScanSectionWithError(
+              HomeComponents.buildRequiredTextField(
+                'Code',
+                'Enter code',
                 codeController,
-                _codeError,
                 focusNode: _codeFocusNode,
+                hasError: _codeError,
               ),
               const SizedBox(height: 24),
               HomeComponents.buildTextField('Khmer Name', 'ឈ្មោះជាភាសាខ្មែរ'),
@@ -131,15 +136,19 @@ class _HomePageState extends State<HomePage> {
                       _isDropdownOpen,
                       currentIndex == 1 ? _handleProblemSelection : (_) {},
                       (isOpen) {
-                        setState(() {
-                          _isDropdownOpen = isOpen;
-                          if (!isOpen && currentIndex != 3) {
-                            _codeFocusNode.unfocus();
-                          }
-                        });
+                        if (mounted) {
+                          setState(() {
+                            _isDropdownOpen = isOpen;
+                            if (isOpen) {
+                              _codeFocusNode.unfocus();
+                              _dropdownFocusNode.requestFocus();
+                            }
+                          });
+                        }
                       },
                       _problemError,
                       isEnabled: currentIndex == 1,
+                      focusNode: _dropdownFocusNode,
                     ),
                   ),
                 ],
@@ -159,8 +168,13 @@ class _HomePageState extends State<HomePage> {
                   onProblemFoundDropdownStateChanged: (isOpen) {
                     setState(() {
                       _problemFoundDropdownOpen = isOpen;
+                      if (isOpen) {
+                        _codeFocusNode.unfocus();
+                        _dropdownFocusNode.requestFocus();
+                      }
                     });
                   },
+                  focusNode: _dropdownFocusNode,
                 ),
               const SizedBox(height: 24),
               HomeComponents.buildSubmitButton(
@@ -238,6 +252,7 @@ class _HomePageState extends State<HomePage> {
   void dispose() {
     codeController.dispose();
     _codeFocusNode.dispose();
+    _dropdownFocusNode.dispose();
     _scrollController.dispose();
     super.dispose();
   }
