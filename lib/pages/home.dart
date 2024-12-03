@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:repair/components/home_component.dart';
 import 'package:repair/events/home_events.dart';
+import 'package:image_picker/image_picker.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -37,6 +38,8 @@ class _HomePageState extends State<HomePage> {
   final ScrollController _scrollController = ScrollController();
   bool _ignoreFocus = false;
   final FocusNode _dropdownFocusNode = FocusNode();
+  List<XFile> _selectedImages = [];
+  bool _anyDropdownOpen = false;
 
   @override
   void initState() {
@@ -72,11 +75,12 @@ class _HomePageState extends State<HomePage> {
       appBar: HomeComponents.buildAppBar(),
       body: GestureDetector(
         onTap: () {
-          if (!_ignoreFocus) {
+          if (!_anyDropdownOpen) {
             FocusScope.of(context).unfocus();
+            FocusManager.instance.primaryFocus?.unfocus();
           }
         },
-        behavior: HitTestBehavior.translucent,
+        behavior: HitTestBehavior.opaque,
         child: SingleChildScrollView(
           controller: _scrollController,
           padding: const EdgeInsets.all(16),
@@ -139,9 +143,13 @@ class _HomePageState extends State<HomePage> {
                         if (mounted) {
                           setState(() {
                             _isDropdownOpen = isOpen;
+                            _anyDropdownOpen = isOpen;
                             if (isOpen) {
                               _codeFocusNode.unfocus();
-                              _dropdownFocusNode.requestFocus();
+                              FocusScope.of(context).unfocus();
+                            } else {
+                              FocusScope.of(context).unfocus();
+                              FocusManager.instance.primaryFocus?.unfocus();
                             }
                           });
                         }
@@ -149,6 +157,7 @@ class _HomePageState extends State<HomePage> {
                       _problemError,
                       isEnabled: currentIndex == 1,
                       focusNode: _dropdownFocusNode,
+                      isRequired: currentIndex == 1,
                     ),
                   ),
                 ],
@@ -166,15 +175,27 @@ class _HomePageState extends State<HomePage> {
                   problemFoundDropdownOpen: _problemFoundDropdownOpen,
                   onProblemFoundSelected: _handleProblemFoundSelection,
                   onProblemFoundDropdownStateChanged: (isOpen) {
-                    setState(() {
-                      _problemFoundDropdownOpen = isOpen;
-                      if (isOpen) {
-                        _codeFocusNode.unfocus();
-                        _dropdownFocusNode.requestFocus();
-                      }
-                    });
+                    if (mounted) {
+                      setState(() {
+                        _problemFoundDropdownOpen = isOpen;
+                        _anyDropdownOpen = isOpen;
+                        if (isOpen) {
+                          _codeFocusNode.unfocus();
+                          FocusScope.of(context).unfocus();
+                        } else {
+                          FocusScope.of(context).unfocus();
+                          FocusManager.instance.primaryFocus?.unfocus();
+                        }
+                      });
+                    }
                   },
                   focusNode: _dropdownFocusNode,
+                  selectedImages: _selectedImages,
+                  onImagesSelected: (images) {
+                    setState(() {
+                      _selectedImages = images;
+                    });
+                  },
                 ),
               const SizedBox(height: 24),
               HomeComponents.buildSubmitButton(
@@ -196,6 +217,9 @@ class _HomePageState extends State<HomePage> {
                   } else if (currentIndex == 3) {
                     HomeEvents.handleConfirmFixed(
                       problemFoundSelected: _problemFoundSelected,
+                      codeController: codeController,
+                      setCodeError: (value) =>
+                          setState(() => _codeError = value),
                       onSuccess: () {
                         setState(() {
                           currentIndex = 1;
@@ -207,7 +231,17 @@ class _HomePageState extends State<HomePage> {
                           _codeError = false;
                           _problemError = false;
                         });
-                        _scrollToTop();
+                        
+                        // Add a slight delay before scrolling
+                        Future.delayed(const Duration(milliseconds: 100), () {
+                          if (mounted) {
+                            _scrollController.animateTo(
+                              0,
+                              duration: const Duration(milliseconds: 500),
+                              curve: Curves.easeInOut,
+                            );
+                          }
+                        });
                       },
                     );
                   } else {

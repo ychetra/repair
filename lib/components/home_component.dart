@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:app_settings/app_settings.dart';
 
 class HomeComponents {
   static PreferredSizeWidget buildAppBar() {
@@ -230,41 +234,65 @@ class HomeComponents {
           ),
         ),
         const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          focusNode: focusNode,
-          enabled: enabled,
-          maxLines: maxLines,
-          style: TextStyle(
-            color: controller.text.isNotEmpty ? Colors.black : Colors.grey[600],
-          ),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(color: Colors.grey[600]),
-            prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(
-                color: hasError ? Colors.red : Colors.grey.shade300,
-                width: hasError ? 2 : 1,
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: controller,
+                focusNode: focusNode,
+                enabled: enabled,
+                maxLines: maxLines,
+                style: TextStyle(
+                  color: controller.text.isNotEmpty
+                      ? Colors.black
+                      : Colors.grey[600],
+                ),
+                decoration: InputDecoration(
+                  hintText: hint,
+                  hintStyle: TextStyle(color: Colors.grey[600]),
+                  prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: hasError ? Colors.red : Colors.grey.shade300,
+                      width: hasError ? 2 : 1,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: hasError ? Colors.red : Colors.grey.shade300,
+                      width: hasError ? 2 : 1,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: hasError ? Colors.red : Colors.blue,
+                      width: 2,
+                    ),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                ),
               ),
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(
-                color: hasError ? Colors.red : Colors.grey.shade300,
-                width: hasError ? 2 : 1,
+            const SizedBox(width: 16),
+            ElevatedButton.icon(
+              onPressed: () async {
+                final result = await Get.toNamed('/qr-scanner');
+                if (result != null) {
+                  controller.text = result.toString();
+                }
+              },
+              icon: const Icon(Icons.qr_code_scanner),
+              label: const Text('SCAN'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1F2937),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
               ),
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(
-                color: hasError ? Colors.red : Colors.blue,
-                width: 2,
-              ),
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-          ),
+          ],
         ),
         const SizedBox(height: 16),
       ],
@@ -412,141 +440,138 @@ class HomeComponents {
     Function(bool) onDropdownStateChanged,
     bool hasError, {
     bool isEnabled = true,
-    String label = 'Problem', // Default label
-    bool isRequired = false, // Default not required
     FocusNode? focusNode,
+    String label = 'Problem',
+    bool isRequired = false,
   }) {
-    return Focus(
-      focusNode: focusNode,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          RichText(
-            text: TextSpan(
-              children: [
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: '$label ',
+                style: GoogleFonts.figtree(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: hasError ? Colors.red : Colors.black,
+                ),
+              ),
+              if (isRequired)
                 TextSpan(
-                  text: '$label ',
+                  text: '*',
                   style: GoogleFonts.figtree(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
-                    color: hasError ? Colors.red : Colors.black,
+                    color: Colors.red,
                   ),
                 ),
-                if (isRequired)
-                  TextSpan(
-                    text: '*',
-                    style: GoogleFonts.figtree(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.red,
-                    ),
-                  ),
-              ],
-            ),
+            ],
           ),
-          const SizedBox(height: 8),
-          Container(
-            height: 48,
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: hasError ? Colors.red : Colors.grey.shade300,
-                width: hasError ? 2 : 1,
-              ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 48,
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: hasError ? Colors.red : Colors.grey.shade300,
+              width: hasError ? 2 : 1,
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: PopupMenuButton<String>(
+            enabled: isEnabled,
+            onOpened: () => onDropdownStateChanged(true),
+            onCanceled: () => onDropdownStateChanged(false),
+            constraints: const BoxConstraints(
+              maxHeight: 300,
+              maxWidth: 300,
+            ),
+            position: PopupMenuPosition.under,
+            offset: const Offset(0, 0),
+            shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
+              side: BorderSide(color: Colors.grey.shade300),
             ),
-            child: PopupMenuButton<String>(
-              enabled: isEnabled,
-              onOpened: () => onDropdownStateChanged(true),
-              onCanceled: () => onDropdownStateChanged(false),
-              constraints: const BoxConstraints(
-                maxHeight: 300,
-                maxWidth: 300,
-              ),
-              position: PopupMenuPosition.under,
-              offset: const Offset(0, 0),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-                side: BorderSide(color: Colors.grey.shade300),
-              ),
-              color: Colors.white,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        isSelected.any((selected) => selected)
-                            ? problemList
-                                .asMap()
-                                .entries
-                                .where((entry) => isSelected[entry.key])
-                                .map((entry) => entry.value)
-                                .join(', ')
-                            : 'Problem lists',
-                        style: TextStyle(
-                          color: isSelected.any((selected) => selected)
-                              ? Colors.black
-                              : Colors.grey[600],
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+            color: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      isSelected.any((selected) => selected)
+                          ? problemList
+                              .asMap()
+                              .entries
+                              .where((entry) => isSelected[entry.key])
+                              .map((entry) => entry.value)
+                              .join(', ')
+                          : 'Problem lists',
+                      style: TextStyle(
+                        color: isSelected.any((selected) => selected)
+                            ? Colors.black
+                            : Colors.grey[600],
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    Icon(
-                      isDropdownOpen
-                          ? Icons.arrow_drop_up
-                          : Icons.arrow_drop_down,
-                      color: Colors.grey[600],
-                    ),
-                  ],
-                ),
+                  ),
+                  Icon(
+                    isDropdownOpen
+                        ? Icons.arrow_drop_up
+                        : Icons.arrow_drop_down,
+                    color: Colors.grey[600],
+                  ),
+                ],
               ),
-              itemBuilder: (context) {
-                return problemList.asMap().entries.map((entry) {
-                  int index = entry.key;
-                  String problem = entry.value;
-                  return PopupMenuItem<String>(
-                    value: problem,
-                    enabled: false,
-                    height: 40,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: StatefulBuilder(
-                      builder: (context, setStateLocal) {
-                        return InkWell(
-                          onTap: () {
-                            onProblemSelected(index);
-                            setStateLocal(() {});
-                          },
-                          child: Row(
-                            children: [
-                              Checkbox(
-                                value: isSelected[index],
-                                onChanged: (bool? value) {
-                                  onProblemSelected(index);
-                                  setStateLocal(() {});
-                                },
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  problem,
-                                  style: const TextStyle(color: Colors.black),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                }).toList();
-              },
-              onSelected: (_) {},
             ),
+            itemBuilder: (context) {
+              return problemList.asMap().entries.map((entry) {
+                int index = entry.key;
+                String problem = entry.value;
+                return PopupMenuItem<String>(
+                  value: problem,
+                  enabled: false,
+                  height: 40,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: StatefulBuilder(
+                    builder: (context, setStateLocal) {
+                      return InkWell(
+                        onTap: () {
+                          onProblemSelected(index);
+                          setStateLocal(() {});
+                        },
+                        child: Row(
+                          children: [
+                            Checkbox(
+                              value: isSelected[index],
+                              onChanged: (bool? value) {
+                                onProblemSelected(index);
+                                setStateLocal(() {});
+                              },
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                problem,
+                                style: const TextStyle(color: Colors.black),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                );
+              }).toList();
+            },
+            onSelected: (_) {},
           ),
-          const SizedBox(height: 16),
-        ],
-      ),
+        ),
+        const SizedBox(height: 16),
+      ],
     );
   }
 
@@ -568,7 +593,10 @@ class HomeComponents {
     required bool problemFoundDropdownOpen,
     required Function(int) onProblemFoundSelected,
     required Function(bool) onProblemFoundDropdownStateChanged,
+    required List<XFile> selectedImages,
+    required Function(List<XFile>) onImagesSelected,
     FocusNode? focusNode,
+    bool isRequired = true,
   }) {
     final List<String> conditions = ['Best', 'Good', 'OK', 'Bad', 'Worse'];
 
@@ -595,7 +623,7 @@ class HomeComponents {
           false,
           isEnabled: true,
           label: 'Problem Found',
-          isRequired: true,
+          isRequired: isRequired,
           focusNode: focusNode,
         ),
         buildTextField(
@@ -604,7 +632,10 @@ class HomeComponents {
           maxLines: 4,
           enabled: true, // Make this field writable
         ),
-        buildImageUploadField(),
+        buildImageUploadField(
+          selectedImages: selectedImages,
+          onImagesSelected: onImagesSelected,
+        ),
         const SizedBox(height: 24),
       ],
     );
@@ -674,7 +705,25 @@ class HomeComponents {
     );
   }
 
-  static Widget buildImageUploadField() {
+  static Widget buildImageUploadField({
+    required List<XFile> selectedImages,
+    required Function(List<XFile>) onImagesSelected,
+    onpress,
+  }) {
+    Future<void> getImages() async {
+      final ImagePicker picker = ImagePicker();
+      try {
+        final List<XFile> images = await picker.pickMultiImage(
+          imageQuality: 50,
+        );
+        if (images.isNotEmpty) {
+          onImagesSelected(images);
+        }
+      } catch (e) {
+        debugPrint('Error picking images: $e');
+      }
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -686,22 +735,78 @@ class HomeComponents {
           ),
         ),
         const SizedBox(height: 8),
-        Row(
+        Column(
           children: [
-            ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1F2937),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            Row(
+              children: [
+                ElevatedButton.icon(
+                  onPressed: getImages,
+                  icon: const Icon(Icons.add_photo_alternate),
+                  label: const Text('Choose Files'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1F2937),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Text(
+                  selectedImages.isEmpty
+                      ? 'No file chosen'
+                      : '${selectedImages.length} files selected',
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+              ],
+            ),
+            if (selectedImages.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 100,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: selectedImages.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Stack(
+                        children: [
+                          Image.file(
+                            File(selectedImages[index].path),
+                            height: 100,
+                            width: 100,
+                            fit: BoxFit.cover,
+                          ),
+                          Positioned(
+                            right: 4,
+                            top: 4,
+                            child: GestureDetector(
+                              onTap: () {
+                                List<XFile> updatedImages =
+                                    List.from(selectedImages);
+                                updatedImages.removeAt(index);
+                                onImagesSelected(updatedImages);
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: Colors.black54,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close,
+                                  size: 16,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ),
-              child: const Text('Choose Files'),
-            ),
-            const SizedBox(width: 16),
-            Text(
-              'No file chosen',
-              style: TextStyle(color: Colors.grey[600]),
-            ),
+            ],
           ],
         ),
         const SizedBox(height: 16),

@@ -132,15 +132,31 @@ class HomeEvents {
   // Add new method for handling confirm fixed stage
   static void handleConfirmFixed({
     required List<bool> problemFoundSelected,
-    required VoidCallback onSuccess,
+    required TextEditingController codeController,
+    required Function(bool) setCodeError,
+    required Function onSuccess,
   }) {
-    // If a snackbar is already showing, don't show another one
-    if (Get.isSnackbarOpen) {
+    bool hasError = false;
+    final bool codeEmpty = codeController.text.trim().isEmpty;
+
+    // Validate code
+    if (codeEmpty) {
+      setCodeError(true);
+      hasError = true;
+      Get.snackbar(
+        'Error',
+        'Please scan or enter a code',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red.withOpacity(0.8),
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
       return;
     }
 
-    // Validate problem found selection
-    if (!problemFoundSelected.any((selected) => selected)) {
+    // Rest of the existing validation logic...
+    if (!problemFoundSelected.contains(true)) {
+      hasError = true;
       Get.snackbar(
         'Error',
         'Please select at least one problem found',
@@ -152,17 +168,18 @@ class HomeEvents {
       return;
     }
 
-    // Show success message
-    Get.snackbar(
-      'Success',
-      'Repair confirmed successfully',
-      snackPosition: SnackPosition.TOP,
-      backgroundColor: Colors.green.withOpacity(0.8),
-      colorText: Colors.white,
-      duration: const Duration(seconds: 2),
-    );
-
-    // Call success callback
-    onSuccess();
+    if (!hasError) {
+      // Add success message before calling onSuccess
+      Get.snackbar(
+        'Success',
+        'Repair confirmed successfully',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.green.withOpacity(0.8),
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+      
+      onSuccess();
+    }
   }
 }
