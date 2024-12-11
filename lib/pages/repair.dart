@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:repair/pages/notifcation.dart';
 import 'package:repair/components/home_component.dart';
 import 'package:repair/events/home_events.dart';
-import 'package:image_picker/image_picker.dart';
 
 class Repair extends StatefulWidget {
   const Repair({super.key});
@@ -45,13 +47,12 @@ class _RepairState extends State<Repair> {
   void initState() {
     super.initState();
     _isSelected = List.generate(_problemList.length, (index) => false);
-    _problemFoundSelected =
-        List.generate(_problemList.length, (index) => false);
+    _problemFoundSelected = List.generate(_problemList.length, (index) => false);
   }
 
   void _handleProblemSelection(int index) {
     setState(() {
-      _isSelected[index] = !_isSelected[index]; 
+      _isSelected[index] = !_isSelected[index];
     });
   }
 
@@ -72,7 +73,17 @@ class _RepairState extends State<Repair> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: HomeComponents.buildAppBar(),
+      appBar: AppBar(
+        title: const Text('Repair'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            onPressed: () {
+              Get.to(() => const NotificationPage());
+            },
+          ),
+        ],
+      ),
       body: GestureDetector(
         onTap: () {
           if (!_anyDropdownOpen) {
@@ -233,7 +244,6 @@ class _RepairState extends State<Repair> {
                           _selectedImages = [];
                         });
 
-                        // Add a slight delay before scrolling
                         Future.delayed(const Duration(milliseconds: 100), () {
                           if (mounted) {
                             _scrollController.animateTo(
